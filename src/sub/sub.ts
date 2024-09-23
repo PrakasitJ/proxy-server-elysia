@@ -15,7 +15,7 @@ app.get("/get/:name", async ({ set, params }) => {
   set.headers["access-control-allow-origin"] = "*";
   set.status = 200;
   return data;
-});
+}, {detail: {tags: ["Sub (Euro)"], summary: "Get file"}});
 
 app.post(
   "/post",
@@ -29,7 +29,7 @@ app.post(
     set.status = 200;
     return {file:body.filename, status: "uploaded"};
   },
-  { body: t.Object({ file: t.File(), filename: t.String(), key: t.String()}) }
+  { body: t.Object({ file: t.File(), filename: t.String(), key: t.String()}) , detail: {tags: ["Sub (Euro)"], summary: "Post file"}}
 );
 
 app.delete(
@@ -44,7 +44,7 @@ app.delete(
     set.status = 200;
     return {file:body.filename, status: "removed"};
   },
-  { body: t.Object({filename: t.String(), key: t.String()}) }
+  { body: t.Object({filename: t.String(), key: t.String()}), detail: {tags: ["Sub (Euro)"], summary: "Delete file"} }
 );
 
 export default app;
