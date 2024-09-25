@@ -26,6 +26,7 @@ app.get(
       return "Unauthorized";
     }
     const { data, length } = await list();
+    set.headers["access-control-allow-origin"] = "*";
     set.status = 200;
     return { list: data, length: length };
   },
@@ -43,6 +44,7 @@ app.post(
       return "Unauthorized";
     }
     const data = await create(body.file, body.filename);
+    set.headers["access-control-allow-origin"] = "*";
     set.status = 200;
     return {file:body.filename, status: "uploaded"};
   },
@@ -58,6 +60,7 @@ app.put(
       return "Unauthorized";
     }
     const data = await rename(body.filename, body.newFilename);
+    set.headers["access-control-allow-origin"] = "*";
     set.status = 200;
     return { file: body.filename, status: "renamed" };
   },
@@ -76,6 +79,7 @@ app.delete(
       return "Unauthorized";
     }
     const data = await remove(body.filename);
+    set.headers["access-control-allow-origin"] = "*";
     set.status = 200;
     return {file:body.filename, status: "removed"};
   },
