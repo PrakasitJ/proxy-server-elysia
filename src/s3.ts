@@ -2,10 +2,10 @@ import {
   CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
+  ListObjectsCommand,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { file } from "bun";
 
 const s3 = new S3Client({
   region: process.env.S3_REGION as string,
@@ -16,6 +16,24 @@ const s3 = new S3Client({
     secretAccessKey: process.env.S3_ACCESS_KEY_SECRET as string,
   },
 });
+
+const list = async (): Promise<{
+  data: any;
+  length: string;
+}> => {
+  const listCommand = new ListObjectsCommand({
+    Bucket: process.env.S3_BUCKET_MAIN as string,
+    Prefix: '',
+  });
+  const object = await s3.send(listCommand);
+  const byteArray = await object.Contents;
+  const length = object.Contents?.length.toString();
+
+  return {
+    data: byteArray,
+    length: length ?? "0",
+  };
+};
 
 const read = async (
   name: string
@@ -76,4 +94,4 @@ const rename = async (filename: string, newFilename: string): Promise<void> => {
   await s3.send(deleteCommand);
 };
 
-export { read, create, remove, rename, s3 };
+export { list, read, create, remove, rename, s3 };

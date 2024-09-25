@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { read, create, remove, rename } from "./s3";
+import { read, create, remove, rename, list } from "./s3";
 
 const app = new Elysia({ prefix: "/proxy" });
 
@@ -19,6 +19,23 @@ app.get(
     return data;
   },
   { detail: { tags: ["Main"], summary: "Get file" } }
+);
+
+app.get(
+  "/list/:key",
+  async ({ set, params }) => {
+    const key = JSON.parse(process.env.S3_KEY_ALLOW as string);
+    if (key[params.key] !== "true") {
+      set.status = 401;
+      return "Unauthorized";
+    }
+    const { data, length } = await list();
+    set.status = 200;
+    return { list: data, length: length };
+  },
+  {
+    detail: { tags: ["Main"], summary: "List file" },
+  }
 );
 
 app.post(
@@ -52,7 +69,11 @@ app.put(
     return { file: body.filename, status: "renamed" };
   },
   {
-    body: t.Object({ filename: t.String(), newFilename: t.String(),key: t.String() }),
+    body: t.Object({
+      filename: t.String(),
+      newFilename: t.String(),
+      key: t.String(),
+    }),
     detail: { tags: ["Main"], summary: "Rename file" },
   }
 );

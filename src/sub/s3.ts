@@ -1,10 +1,29 @@
 import {
-    CopyObjectCommand,
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
+  ListObjectsCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { s3 } from "../s3";
+
+const list = async (): Promise<{
+  data: any;
+  length: string;
+}> => {
+  const listCommand = new ListObjectsCommand({
+    Bucket: process.env.S3_BUCKET_SUB as string,
+    Prefix: "",
+  });
+  const object = await s3.send(listCommand);
+  const byteArray = await object.Contents;
+  const length = object.Contents?.length.toString();
+
+  return {
+    data: byteArray,
+    length: length ?? "0",
+  };
+};
 
 const read = async (
   name: string
@@ -65,4 +84,4 @@ const rename = async (filename: string, newFilename: string): Promise<void> => {
   await s3.send(deleteCommand);
 };
 
-export { read, create, remove, rename};
+export { list, read, create, remove, rename };

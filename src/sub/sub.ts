@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { read, create, remove, rename } from "./s3";
+import { read, create, remove, rename, list } from "./s3";
 
 const app = new Elysia({prefix: "/proxy/euro"});
 
@@ -16,6 +16,23 @@ app.get("/get/:name", async ({ set, params }) => {
   set.status = 200;
   return data;
 }, {detail: {tags: ["Sub (Euro)"], summary: "Get file"}});
+
+app.get(
+  "/list/:key",
+  async ({ set, params }) => {
+    const key = JSON.parse(process.env.S3_KEY_ALLOW as string);
+    if (key[params.key] !== "true") {
+      set.status = 401;
+      return "Unauthorized";
+    }
+    const { data, length } = await list();
+    set.status = 200;
+    return { list: data, length: length };
+  },
+  {
+    detail: { tags: ["Sub (Euro)"], summary: "List file" },
+  }
+);
 
 app.post(
   "/post",
