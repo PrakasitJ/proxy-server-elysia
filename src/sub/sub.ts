@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { read, create, remove } from "./s3";
+import { read, create, remove, rename } from "./s3";
 
 const app = new Elysia({prefix: "/proxy/euro"});
 
@@ -30,6 +30,24 @@ app.post(
     return {file:body.filename, status: "uploaded"};
   },
   { body: t.Object({ file: t.File(), filename: t.String(), key: t.String()}) , detail: {tags: ["Sub (Euro)"], summary: "Post file"}}
+);
+
+app.put(
+  "/rename",
+  async ({ set, body }) => {
+    const key = JSON.parse(process.env.S3_KEY_ALLOW as string);
+    if (key[body.key] !== "true") {
+      set.status = 401;
+      return "Unauthorized";
+    }
+    const data = await rename(body.filename, body.newFilename);
+    set.status = 200;
+    return { file: body.filename, status: "renamed" };
+  },
+  {
+    body: t.Object({ filename: t.String(), newFilename: t.String(),key: t.String() }),
+    detail: { tags: ["Sub (Euro)"], summary: "Rename file" },
+  }
 );
 
 app.delete(
