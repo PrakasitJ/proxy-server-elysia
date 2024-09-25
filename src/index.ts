@@ -2,6 +2,7 @@ import { Elysia } from "elysia";
 import { swagger } from "@elysiajs/swagger";
 import main from "./main";
 import sub from "./sub/sub";
+import middleware from "./middleware";
 const app = new Elysia();
 
 app.use(
@@ -20,6 +21,7 @@ app.use(
   })
 );
 
+app.use(middleware);
 app.use(main);
 app.use(sub);
 
