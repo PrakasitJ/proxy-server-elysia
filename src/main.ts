@@ -7,6 +7,12 @@ app.get(
   "/get/:name",
   async ({ set, params }) => {
     const name = params.name as string;
+
+    const file = await Bun.file(`public/${name}`);
+    if ((await file.exists()) === true) {
+      return file;
+    }
+
     const { data, length, contentType } = await read(name);
     set.headers["Content-Type"] = contentType;
     set.headers["cache-control"] = "immutable, max-age=31536000";

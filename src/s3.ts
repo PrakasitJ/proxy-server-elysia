@@ -6,6 +6,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import { unlink } from "node:fs/promises";
 
 const s3 = new S3Client({
   region: process.env.S3_REGION as string,
@@ -23,7 +24,7 @@ const list = async (): Promise<{
 }> => {
   const listCommand = new ListObjectsCommand({
     Bucket: process.env.S3_BUCKET_MAIN as string,
-    Prefix: '',
+    Prefix: "",
   });
   const object = await s3.send(listCommand);
   const byteArray = await object.Contents;
@@ -47,11 +48,13 @@ const read = async (
     Key: name,
   });
   const object = await s3.send(readCommand);
-  const byteArray = await object.Body;
+  const blob = await object.Body;
   const length = object.ContentLength?.toString();
+  const file = (await blob?.transformToByteArray()) as any;
+  await Bun.write(`public/${name}`, file);
 
   return {
-    data: byteArray,
+    data: file,
     length: length ?? "0",
     contentType: object.ContentType ?? "application/octet-stream",
   };
@@ -64,6 +67,8 @@ const create = async (file: File, filename: string): Promise<string> => {
     Key: filename,
     ContentType: file.type,
   };
+  
+  await Bun.write(`public/${filename}`, await file.arrayBuffer());
 
   // Upload file to S3
   const uploadCommand = new PutObjectCommand(params);
@@ -76,8 +81,8 @@ const remove = async (filename: string): Promise<void> => {
     Bucket: process.env.S3_BUCKET_MAIN as string,
     Key: filename,
   });
-
   await s3.send(deleteCommand);
+  await unlink("public/" + filename);
 };
 
 const rename = async (filename: string, newFilename: string): Promise<void> => {
@@ -86,6 +91,15 @@ const rename = async (filename: string, newFilename: string): Promise<void> => {
     CopySource: (process.env.S3_BUCKET_MAIN as string) + "/" + filename,
     Key: newFilename,
   });
+
+  try {
+    const file = await Bun.file(`public/${filename}`);
+    const newFile = await Bun.write(`public/${newFilename}`, file);
+    unlink("public/" + filename);
+  } catch (error) {
+    console.log(error);
+  }
+
   const response = await s3.send(copyCommand);
   const deleteCommand = new DeleteObjectCommand({
     Bucket: process.env.S3_BUCKET_MAIN as string,
