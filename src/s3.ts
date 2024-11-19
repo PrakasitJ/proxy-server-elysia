@@ -94,4 +94,19 @@ const rename = async (filename: string, newFilename: string): Promise<void> => {
   await s3.send(deleteCommand);
 };
 
-export { list, read, create, remove, rename, s3 };
+
+const createInsideFolder = async (file: File, filename: string, folder: string): Promise<string> => {
+  const params = {
+    Body: Buffer.from(await file.arrayBuffer()),
+    Bucket: process.env.S3_BUCKET_MAIN as string,
+    Key: folder+filename,
+    ContentType: file.type,
+  };
+
+    // Upload file to S3
+    const uploadCommand = new PutObjectCommand(params);
+    const response = await s3.send(uploadCommand);
+    return filename;
+  };
+
+export { list, read, create, remove, rename, createInsideFolder, s3 };

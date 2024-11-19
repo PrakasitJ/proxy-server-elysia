@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { read, create, remove, rename, list } from "./s3";
+import { read, create, createInsideFolder, remove, rename, list } from "./s3";
 
 const app = new Elysia({ prefix: "/proxy" });
 
@@ -55,6 +55,25 @@ app.post(
   {
     body: t.Object({ file: t.File(), filename: t.String(), key: t.String() }),
     detail: { tags: ["Main"], summary: "Post file" },
+  }
+);
+
+app.post(
+  "/postFD",
+  async ({ set, body }) => {
+    const key = JSON.parse(process.env.S3_KEY_ALLOW as string);
+    if (key[body.key] !== "true") {
+      set.status = 401;
+      return "Unauthorized";
+    }
+    const data = await createInsideFolder(body.file, body.filename, body.folder);
+    set.headers["access-control-allow-origin"] = "*";
+    set.status = 200;
+    return { file: body.filename, status: "uploaded" };
+  },
+  {
+    body: t.Object({ file: t.File(), filename: t.String(), folder: t.String(), key: t.String() }),
+    detail: { tags: ["Main"], summary: "Post file inside folder" },
   }
 );
 
