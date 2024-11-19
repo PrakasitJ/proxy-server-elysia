@@ -99,7 +99,7 @@ const createInsideFolder = async (file: File, filename: string, folder: string):
   const params = {
     Body: Buffer.from(await file.arrayBuffer()),
     Bucket: process.env.S3_BUCKET_MAIN as string,
-    Key: folder+filename,
+    Key: folder+"/"+filename,
     ContentType: file.type,
   };
 
