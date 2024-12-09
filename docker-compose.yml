@@ -1,0 +1,11 @@
+services:
+  s3:
+    build: .
+    networks:
+      - npm
+networks:
+  npm:
+    name: bun_default
+    external: true
+    
+    

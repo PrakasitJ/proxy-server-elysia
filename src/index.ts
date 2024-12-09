@@ -1,8 +1,8 @@
 import { Elysia } from "elysia";
 import { swagger } from "@elysiajs/swagger";
 import main from "./main";
-import sub from "./sub/sub";
 import middleware from "./middleware";
+
 const app = new Elysia();
 
 app.use(
@@ -10,12 +10,11 @@ app.use(
     path: "/docs",
     documentation: {
       info: {
-        title: "PrakasitJ S3 API Documentation",
+        title: "S3 API Documentation",
         version: "1.0.0",
       },
       tags: [
         { name: "Main", description: "General endpoints" },
-        { name: "Sub (Euro)", description: "Authentication endpoints" },
       ],
     },
   })
@@ -23,7 +22,6 @@ app.use(
 
 app.use(middleware);
 app.use(main);
-app.use(sub);
 
 app.listen(3000);
 

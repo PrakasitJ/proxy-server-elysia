@@ -57,6 +57,29 @@ const read = async (
   };
 };
 
+const readInsideFolder = async (
+  name: string,
+  folder: string
+): Promise<{
+  data: any;
+  length: string;
+  contentType: string;
+}> => {
+  const readCommand = new GetObjectCommand({
+    Bucket: process.env.S3_BUCKET_MAIN as string,
+    Key: folder+'/'+name,
+  });
+  const object = await s3.send(readCommand);
+  const byteArray = await object.Body;
+  const length = object.ContentLength?.toString();
+
+  return {
+    data: byteArray,
+    length: length ?? "0",
+    contentType: object.ContentType ?? "application/octet-stream",
+  };
+};
+
 const create = async (file: File, filename: string): Promise<string> => {
   const params = {
     Body: Buffer.from(await file.arrayBuffer()),
@@ -109,4 +132,4 @@ const createInsideFolder = async (file: File, filename: string, folder: string):
     return filename;
   };
 
-export { list, read, create, remove, rename, createInsideFolder, s3 };
+export { list, read, readInsideFolder,create, remove, rename, createInsideFolder, s3 };

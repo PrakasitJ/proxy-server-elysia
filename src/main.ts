@@ -1,10 +1,12 @@
 import { Elysia, t } from "elysia";
-import { read, create, createInsideFolder, remove, rename, list } from "./s3";
+import { read, create, createInsideFolder, remove, rename, list, readInsideFolder } from "./s3";
 
-const app = new Elysia({ prefix: "/proxy" });
+const app = new Elysia({ prefix: "" });
+
+app.get("/", async () => "Welcome to S3 API");
 
 app.get(
-  "/get/:name",
+  "root/:name",
   async ({ set, params }) => {
     const name = params.name as string;
     const { data, length, contentType } = await read(name);
@@ -18,11 +20,28 @@ app.get(
     set.status = 200;
     return data;
   },
-  { detail: { tags: ["Main"], summary: "Get file" } }
+  { detail: { tags: ["Main"], summary: "Get file from root" } }
 );
 
 app.get(
-  "/list/:key",
+  ":folder/:name",
+  async ({ set, params }) => {
+    const { data, length, contentType } = await readInsideFolder(params.name, params.folder);
+    set.headers["Content-Type"] = contentType;
+    set.headers["cache-control"] = "immutable, max-age=31536000";
+    set.headers["content-length"] = `bytes ${0}-${
+      parseInt(length) - 1
+    }/${length}`;
+    set.headers["Accept-Ranges"] = "bytes";
+    set.headers["access-control-allow-origin"] = "*";
+    set.status = 200;
+    return data;
+  },
+  { detail: { tags: ["Main"], summary: "Get file inside folder" } }
+);
+
+app.get(
+  "list/:key",
   async ({ set, params }) => {
     const key = JSON.parse(process.env.S3_KEY_ALLOW as string);
     if (key[params.key] !== "true") {
@@ -35,12 +54,12 @@ app.get(
     return { list: data, length: length };
   },
   {
-    detail: { tags: ["Main"], summary: "List file" },
+    detail: { tags: ["Main"], summary: "List all file" },
   }
 );
 
 app.post(
-  "/post",
+  "upload",
   async ({ set, body }) => {
     const key = JSON.parse(process.env.S3_KEY_ALLOW as string);
     if (key[body.key] !== "true") {
@@ -54,31 +73,13 @@ app.post(
   },
   {
     body: t.Object({ file: t.File(), filename: t.String(), key: t.String() }),
-    detail: { tags: ["Main"], summary: "Post file" },
+    detail: { tags: ["Main"], summary: "Upload file" },
   }
 );
 
-app.post(
-  "/postFD",
-  async ({ set, body }) => {
-    const key = JSON.parse(process.env.S3_KEY_ALLOW as string);
-    if (key[body.key] !== "true") {
-      set.status = 401;
-      return "Unauthorized";
-    }
-    const data = await createInsideFolder(body.file, body.filename, body.folder);
-    set.headers["access-control-allow-origin"] = "*";
-    set.status = 200;
-    return { file: body.filename, status: "uploaded" };
-  },
-  {
-    body: t.Object({ file: t.File(), filename: t.String(), folder: t.String(), key: t.String() }),
-    detail: { tags: ["Main"], summary: "Post file inside folder" },
-  }
-);
 
 app.put(
-  "/rename",
+  "rename",
   async ({ set, body }) => {
     const key = JSON.parse(process.env.S3_KEY_ALLOW as string);
     if (key[body.key] !== "true") {
@@ -101,7 +102,7 @@ app.put(
 );
 
 app.delete(
-  "/delete",
+  "delete",
   async ({ set, body }) => {
     const key = JSON.parse(process.env.S3_KEY_ALLOW as string);
     if (key[body.key] !== "true") {
